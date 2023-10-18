@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: INFO-SERVICE
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  datasource:
+    url: jdbc:mysql://localhost:3306/dev
+    username: root
+    password: root
+  config:
+    import: configserver:http://localhost:9296
+
+server:
+  port: 9090
+
+
+
