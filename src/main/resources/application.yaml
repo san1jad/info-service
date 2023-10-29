@@ -8,14 +8,133 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
   datasource:
-    url: jdbc:mysql://localhost:3306/dev
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/dev
     username: root
     password: root
-  config:
-    import: configserver:http://localhost:9296
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-36592237.okta.com/oauth2/default
+      client:
+        registration:
+          internal-client:
+            provider: okta
+            authorization-grant-type: client_credentials
+            scope: internal
+            client-id: 0oacv28sym7cFitTr5d7
+            client-secret: N4Rq3keNF9Q43Nq5eH-_Sg9ladr8dq2_Ay5M-_K6tqZngHWXhImqB3kweSWnuW1o
+        provider:
+          okta:
+            issuer-uri: https://dev-36592237.okta.com/oauth2/default
 
+
+okta:
+  oauth2:
+    issuer: https://dev-36592237.okta.com/oauth2/default
+    audience: api://default
+    client-id: 0oacv28sym7cFitTr5d7
+    client-secret: N4Rq3keNF9Q43Nq5eH-_Sg9ladr8dq2_Ay5M-_K6tqZngHWXhImqB3kweSWnuW1o
+    scopes: openid, profile, email, offline_access
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_ADDRESS:http://localhost:8076/eureka}
+
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requestes: true
 server:
   port: 9090
+
+version: '3'
+services:
+  registry-service:
+    image: 'jadhavsanjay64/registry-service:0.0.1'
+    container_name: registry-service
+    ports:
+      - '8076:8076'
+    networks:
+      - bootapp
+    depends_on:
+      - mysqldb
+
+  api-gateway:
+    image: 'jadhavsanjay64/api-gateway-service:0.0.1'
+    container_name: api-gateway-service
+    ports:
+      - "9000:9000"
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://registry-service:8076/eureka
+      - DB_HOST=mysqldb
+    networks:
+      - bootapp
+    depends_on:
+      - mysqldb
+      - registry-service
+
+  info-service:
+    image: 'jadhavsanjay64/info-service:0.0.1'
+    container_name: info-service
+    ports:
+      - "9090:9090"
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://registry-service:8076/eureka
+      - DB_HOST=mysqldb
+    networks:
+      - bootapp
+    depends_on:
+      - mysqldb
+      - registry-service
+
+  garbage-service:
+    image: 'jadhavsanjay64/garbage-service:0.0.1'
+    container_name: garbage-service
+    ports:
+      - "9091:9091"
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://registry-service:8076/eureka
+      - DB_HOST=mysqldb
+    networks:
+      - bootapp
+    depends_on:
+      - mysqldb
+      - registry-service
+      - info-service
+  mysqldb:
+    container_name: mysqldb
+    image: mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - bootapp
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=dev
+
+networks:
+  bootapp:
+
 
 
 
