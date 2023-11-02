@@ -11,22 +11,8 @@ spring:
     url: jdbc:mysql://${DB_HOST:localhost}:3306/dev
     username: root
     password: root
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://dev-36592237.okta.com/oauth2/default
-      client:
-        registration:
-          internal-client:
-            provider: okta
-            authorization-grant-type: client_credentials
-            scope: internal
-            client-id: 0oacv28sym7cFitTr5d7
-            client-secret: N4Rq3keNF9Q43Nq5eH-_Sg9ladr8dq2_Ay5M-_K6tqZngHWXhImqB3kweSWnuW1o
-        provider:
-          okta:
-            issuer-uri: https://dev-36592237.okta.com/oauth2/default
+  config:
+    import: configserver:http://${CONFIG_SERVER_URL:localhost}:9296
 
 
 okta:
@@ -37,33 +23,6 @@ okta:
     client-secret: N4Rq3keNF9Q43Nq5eH-_Sg9ladr8dq2_Ay5M-_K6tqZngHWXhImqB3kweSWnuW1o
     scopes: openid, profile, email, offline_access
 
-eureka:
-  instance:
-    prefer-ip-address: true
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    serviceUrl:
-      defaultZone: ${EUREKA_SERVER_ADDRESS:http://localhost:8076/eureka}
-
-logging:
-  pattern:
-    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: prometheus
-  tracing:
-    sampling:
-      probability: 1.0
-  metrics:
-    distribution:
-      percentiles-histogram:
-        http:
-          server:
-            requestes: true
 server:
   port: 9090
 
